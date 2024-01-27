@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from typing import Type, TypeVar, Union, Iterable, Any
+from typing import Type, TypeVar, Union, Iterable, Any, NewType
+from pydantic import GetCoreSchemaHandler
 from web3 import Web3, types as w3types
+from pydantic_core import core_schema
 
 
 class AttrDict(dict):
@@ -29,14 +31,35 @@ class AttrDict(dict):
         self[key] = value
 
 
-class Address(str):  # TODO: pydantic compatible
-    def __new__(cls, *args, **kwargs):
-        address: Union[str, w3types.HexBytes] = args[0]
+class HexStr(str):
+    @classmethod
+    def process(cls, address: Union[str, w3types.HexBytes]) -> str:
         if isinstance(address, w3types.HexBytes):
             address = address.hex()
+        return address
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+            cls, _: Type[Any], __: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        return core_schema.no_info_after_validator_function(
+            function=cls.process,
+            schema=core_schema.str_schema(),
+        )
+
+
+class Address(HexStr):
+    @classmethod
+    def process(cls, address: Union[str, w3types.HexBytes]) -> str:
+        address = super(Address, cls).process(address)
         if len(address) != 42:
             address = address[:2] + address[26:]
+        if len(address) != 42:
+            raise ValueError('Any `Address` length must be 42')
         return str(Web3.to_checksum_address(address))
+
+    def __new__(cls, *args, **kwargs):
+        return cls.process(args[0])
 
 
 class ContractAddress(Address):
@@ -51,12 +74,16 @@ class WalletAddress(Address):
     ...
 
 
-class Hash(str):
-    def __new__(cls, *args, **kwargs):
-        hash: Union[str, w3types.HexBytes] = args[0]
-        if isinstance(hash, w3types.HexBytes):
-            hash = hash.hex()
+class Hash(HexStr):
+    @classmethod
+    def process(cls, hash: Union[str, w3types.HexBytes]) -> str:
+        hash = super(Hash, cls).process(hash)
+        if len(hash) != 66:
+            raise ValueError('Any `Hash` length must be 66')
         return hash
+
+    def __new__(cls, *args, **kwargs):
+        return cls.process(args[0])
 
 
 class TxHash(Hash):
@@ -66,6 +93,9 @@ class TxHash(Hash):
 class BlockHash(Hash):
     ...
 
+
+BlockIdentifier = Union[w3types.BlockNumber, BlockHash]
+NetworkID = NewType('NetworkID', int)
 
 UnixTime: Type = TypeVar('UnixTime', bound=int)
 HTML: Type = TypeVar('HTML', bound=str)

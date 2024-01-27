@@ -1,5 +1,5 @@
 from typing import Any, Optional
-import ujson as json
+import orjson as json
 import asyncio
 import aiohttp
 

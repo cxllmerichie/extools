@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+aiohttp = "*"
+loguru = "*"
+aiomysql = "*"
+web3 = "*"
+aioredis = "*"
+
+aiodns = "*"
+orjson = "*"
+cchardet = "*"
+uvloop = "*"
+
+[dev-packages]
+
+[requires]

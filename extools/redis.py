@@ -1,7 +1,7 @@
 from typing import Optional, Any, Union, AsyncGenerator
 from aioredis import Redis as _Redis
 from contextlib import suppress
-import ujson as json
+import orjson as json
 
 from . import types
 
