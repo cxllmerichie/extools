@@ -1,9 +1,8 @@
 from typing import Optional, Any, Union, AsyncGenerator
 from aioredis import Redis as _Redis
 from contextlib import suppress
-import orjson as json
 
-from . import types
+from . import types, json
 
 
 class Redis(_Redis):

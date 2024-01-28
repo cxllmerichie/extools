@@ -1,8 +1,7 @@
 from typing import Any, Optional
-import orjson as json
 import aiohttp
 
-from . import logman, types
+from . import logman, types, json
 
 
 class API:

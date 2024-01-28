@@ -1,10 +1,9 @@
 from typing import Any, Optional
-import orjson as json
 import asyncio
 import aiohttp
 
+from . import logman, types, json
 from .utils import unixnow
-from . import logman, types
 
 
 class API:

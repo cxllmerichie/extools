@@ -1,7 +1,7 @@
-import orjson as json
 import aiohttp
 
 from . import types
+from .. import json
 
 
 async def request(
