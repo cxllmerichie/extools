@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import Type, TypeVar, Union, Iterable, Any, NewType
 from pydantic import GetCoreSchemaHandler
 from web3 import Web3, types as w3types
+from pydantic import JsonValue, HttpUrl
 from pydantic_core import core_schema
+
+from web3.types import (
+    BlockNumber,
+)
 
 
 class AttrDict(dict):
@@ -94,10 +99,12 @@ class BlockHash(Hash):
     ...
 
 
-BlockIdentifier = Union[w3types.BlockNumber, BlockHash]
-NetworkID = NewType('NetworkID', int)
+BlockIdentifier: Type = Union[BlockNumber, BlockHash]
+NetworkID: Type = NewType('NetworkID', int)
 
-UnixTime: Type = TypeVar('UnixTime', bound=int)
-HTML: Type = TypeVar('HTML', bound=str)
-JSONItem = dict[str, Any]
-JSONResponse = Union[JSONItem, list[JSONItem]]
+PreciseUnixUtc: Type = NewType('PreciseUnixUtc', float)
+ImpreciseUnixUtc: Type = NewType('ImpreciseUnixUtc', int)
+HTML: Type = NewType('HTML', str)
+
+JSONResponse: Type = JsonValue
+URL: Type = HttpUrl

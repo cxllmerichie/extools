@@ -19,6 +19,5 @@ async def request(
                     data=json.dumps([p[0] for p in payload]),
             ) as r:
                 return [decoders[response['id']](response['result']) for response in await r.json()]
-    except Exception as e:
-        print(e)
+    except Exception as _:
         return []

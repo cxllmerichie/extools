@@ -1,3 +1,4 @@
+from typing_extensions import TypedDict
 from typing import Callable
 import uuid
 import web3
@@ -112,3 +113,65 @@ def balance_of(contract: str, address: str) -> tuple[types.CallParams, types.Dec
         },
         'latest'
     ], decoders.hex_to_int, 'eth_call'
+
+
+@payload
+def balance(address: str, identifier: int | str = 'latest') -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
+    return [
+        web3.Web3.to_checksum_address(address),
+        identifier,
+    ], decoders.hex_to_int, 'eth_getBalance'
+
+
+@payload
+def receipt(txhash) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
+    return [
+        txhash,
+    ], lambda _: _, 'eth_getTransactionReceipt'
+
+
+@payload
+def block(hash: str, details: bool = False) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
+    """
+    if isinstance(identifier, int) or identifier.lower() in {'latest', 'pending', 'earliest', 'safe', 'finalized'}:
+        'eth_getBlockByNumber'
+    else:
+        'eth_getBlockByHash'
+    :param hash:
+    :param details:
+    :return:
+    """
+    return [
+        hash,
+        details,
+    ], lambda _: _, 'eth_getBlockByHash'
+
+
+@payload
+def filter(**params: TypedDict(
+    'FilterParams', {
+        'address': list,
+        'blockHash': str,
+        'fromBlock': str | int,
+        'toBlock': str | int,
+        'topics': list[str],
+    },
+    total=False
+)) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
+    return [
+        params,
+    ], lambda _: _, 'eth_newFilter'
+
+
+@payload
+def entries(filter_id) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
+    return [
+        filter_id,
+    ], lambda _: _, 'eth_getFilterLogs'
+
+
+@payload
+def changes(filter_id) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
+    return [
+        filter_id,
+    ], lambda _: _, 'eth_getFilterChanges'
