@@ -10,8 +10,8 @@ class Limiter(ABC):
     fetched_at: float = utils.unixnow()
     delay_sec: float = 0  # 60 / req_per_min
 
-    def __init__(self, logger: logman.Logger):
-        self.logger: logman.Logger = logger
+    def __init__(self, logger: Optional[logman.Logger]):
+        self.logger: Optional[logman.Logger] = logger
 
     @abstractmethod
     async def __call__(self, endpoint: str, params: dict[str, Any] = None) -> Optional[types.JSONResponse]:
@@ -36,7 +36,8 @@ class Limiter(ABC):
                 ) as r:
                     return await r.json()
         except Exception as e:
-            self.logger.error(e)
+            if self.logger:
+                self.logger.error(e)
 
     async def __aenter__(self):
         passed_sec = utils.unixnow() - Limiter.fetched_at

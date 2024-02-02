@@ -3,3 +3,6 @@ from ._datetime import (
     utcnow,
     isonow,
 )
+from ._asyncio import (
+    aenumerate,
+)

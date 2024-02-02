@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Type, TypeVar, Union, Iterable, Any, NewType
+from typing import Type, Union, Iterable, Any, NewType
 from pydantic import GetCoreSchemaHandler
 from web3 import Web3, types as w3types
 from pydantic import JsonValue, HttpUrl
