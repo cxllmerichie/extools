@@ -3,11 +3,14 @@ from __future__ import annotations
 from typing import Type, Union, Iterable, Any, NewType
 from pydantic import GetCoreSchemaHandler
 from web3 import Web3, types as w3types
-from pydantic import JsonValue, HttpUrl
 from pydantic_core import core_schema
 
 from web3.types import (
     BlockNumber,
+)
+from pydantic import (  # noqa
+    JsonValue as JSONResponse,
+    HttpUrl as URL  # noqa
 )
 
 
@@ -105,6 +108,3 @@ NetworkID: Type = NewType('NetworkID', int)
 PreciseUnixUtc: Type = NewType('PreciseUnixUtc', float)
 ImpreciseUnixUtc: Type = NewType('ImpreciseUnixUtc', int)
 HTML: Type = NewType('HTML', str)
-
-JSONResponse: Type = JsonValue
-URL: Type = HttpUrl
