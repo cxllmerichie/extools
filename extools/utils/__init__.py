@@ -6,3 +6,6 @@ from ._datetime import (
 from ._asyncio import (
     aenumerate,
 )
+from ._web3 import (
+    to_checksum_address
+)

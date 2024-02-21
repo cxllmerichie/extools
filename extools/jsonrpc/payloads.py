@@ -1,137 +1,180 @@
-from typing_extensions import TypedDict
-from typing import Callable
+from typing import Callable, TypedDict, Any
 import uuid
 import web3
 
-from . import decoders, types
+from . import decoders, _types
+from .. import utils
 
 
 def payload(
-        params: Callable[..., tuple[types.CallParams, types.Decoder, types.CallMethod]]
-) -> Callable[..., tuple[types.Payload, dict[types.CallID, types.Decoder]]]:
-    def wrapper(*args, **kwargs) -> tuple[types.Payload, dict[types.CallID, types.Decoder]]:
-        call_id: types.CallID = str(uuid.uuid4())
-        _params, decoder, method = params(*args, **kwargs)
-        return {
-            'jsonrpc': '2.0',
-            'id': call_id,
-            'method': method,
-            'params': _params,
-        }, {call_id: decoder}
+        call_data: Callable[..., _types.CallData]
+) -> Callable[..., dict[str: dict[str, Any]]]:
+    def wrapper(*args, **kwargs) -> dict[str: dict[str, Any]]:
+        id, data = str(uuid.uuid4()), call_data(*args, **kwargs)
+        return {id: {
+            'payload': {
+                'jsonrpc': '2.0',
+                'id': id,
+                'method': data['method'],
+                'params': data['params'],
+            },
+            'decoder': data['decoder']
+        }}
+
     return wrapper
 
 
 @payload
-def token0(pair: str) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        {
-            'to': web3.Web3.to_checksum_address(pair),
-            'data': web3.Web3.keccak(text='token0()').hex(),
-        },
-        'latest'
-    ], decoders.hex_to_addr, 'eth_call'
+def token0(pair: str) -> _types.CallData:
+    return _types.CallData(
+        method='eth_call',
+        decoder=decoders.to_addr,
+        params=[
+            {
+                'to': utils.to_checksum_address(pair),
+                'data': web3.Web3.keccak(text='token0()').hex(),
+            },
+            'latest'
+        ]
+    )
 
 
 @payload
-def token1(pair: str) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        {
-            'to': web3.Web3.to_checksum_address(pair),
-            'data': web3.Web3.keccak(text='token1()').hex(),
-        },
-        'latest'
-    ], decoders.hex_to_addr, 'eth_call'
+def token1(pair: str) -> _types.CallData:
+    return _types.CallData(
+        method='eth_call',
+        decoder=decoders.to_addr,
+        params=[
+            {
+                'to': utils.to_checksum_address(pair),
+                'data': web3.Web3.keccak(text='token1()').hex(),
+            },
+            'latest'
+        ]
+    )
 
 
 @payload
-def symbol(contract: str) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        {
-            'to': web3.Web3.to_checksum_address(contract),
-            'data': web3.Web3.keccak(text='symbol()').hex(),
-        },
-        'latest'
-    ], decoders.hex_to_str, 'eth_call'
+def symbol(contract: str) -> _types.CallData:
+    return _types.CallData(
+        method='eth_call',
+        decoder=decoders.to_str,
+        params=[
+            {
+                'to': utils.to_checksum_address(contract),
+                'data': web3.Web3.keccak(text='symbol()').hex(),
+            },
+            'latest'
+        ]
+    )
 
 
 @payload
-def name(contract: str) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        {
-            'to': web3.Web3.to_checksum_address(contract),
-            'data': web3.Web3.keccak(text='name()').hex(),
-        },
-        'latest'
-    ], decoders.hex_to_str, 'eth_call'
+def name(contract: str) -> _types.CallData:
+    return _types.CallData(
+        method='eth_call',
+        decoder=decoders.to_str,
+        params=[
+            {
+                'to': utils.to_checksum_address(contract),
+                'data': web3.Web3.keccak(text='name()').hex(),
+            },
+            'latest'
+        ]
+    )
 
 
 @payload
-def get_reserves(pair: str) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
+def get_reserves(pair: str) -> _types.CallData:
     def decoder(reserves):
         reserves_bytes = bytes.fromhex(reserves[2:])
         reserves0 = int.from_bytes(reserves_bytes[:32], 'big')
         reserves1 = int.from_bytes(reserves_bytes[32: 64], 'big')
         return reserves0, reserves1
 
-    return [
-        {
-            'to': web3.Web3.to_checksum_address(pair),
-            'data': web3.Web3.keccak(text='getReserves()').hex(),
-        },
-        'latest'
-    ], decoder, 'eth_call'
+    return _types.CallData(
+        method='eth_call',
+        decoder=decoder,
+        params=[
+            {
+                'to': utils.to_checksum_address(pair),
+                'data': web3.Web3.keccak(text='getReserves()').hex(),
+            },
+            'latest'
+        ]
+    )
 
 
 @payload
-def decimals(contract: str) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        {
-            'to': web3.Web3.to_checksum_address(contract),
-            'data': web3.Web3.keccak(text='decimals()').hex(),
-        },
-        'latest'
-    ], decoders.hex_to_int, 'eth_call'
+def decimals(contract: str) -> _types.CallData:
+    return _types.CallData(
+        method='eth_call',
+        decoder=decoders.to_int,
+        params=[
+            {
+                'to': utils.to_checksum_address(contract),
+                'data': web3.Web3.keccak(text='decimals()').hex(),
+            },
+            'latest'
+        ],
+    )
 
 
 @payload
-def total_supply(contract: str) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        {
-            'to': web3.Web3.to_checksum_address(contract),
-            'data': web3.Web3.keccak(text='totalSupply()').hex(),
-        },
-        'latest'
-    ], decoders.hex_to_int, 'eth_call'
+def total_supply(contract: str) -> _types.CallData:
+    return _types.CallData(
+        method='eth_call',
+        decoder=decoders.to_int,
+        params=[
+            {
+                'to': utils.to_checksum_address(contract),
+                'data': web3.Web3.keccak(text='totalSupply()').hex(),
+            },
+            'latest'
+        ]
+    )
 
 
 @payload
-def balance_of(contract: str, address: str) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        {
-            'to': web3.Web3.to_checksum_address(contract),
-            'data': f'0x70a08231000000000000000000000000{web3.Web3.to_checksum_address(address)[2:]}',
-        },
-        'latest'
-    ], decoders.hex_to_int, 'eth_call'
+def balance_of(contract: str, address: str) -> _types.CallData:
+    return _types.CallData(
+        method='eth_call',
+        decoder=decoders.to_int,
+        params=[
+            {
+                'to': utils.to_checksum_address(contract),
+                'data': f'0x70a08231000000000000000000000000{utils.to_checksum_address(address)[2:]}',
+            },
+            'latest'
+        ],
+    )
 
 
 @payload
-def balance(address: str, identifier: int | str = 'latest') -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        web3.Web3.to_checksum_address(address),
-        identifier,
-    ], decoders.hex_to_int, 'eth_getBalance'
+def balance(address: str, identifier: int | str = 'latest') -> _types.CallData:
+    return _types.CallData(
+        method='eth_getBalance',
+        decoder=decoders.to_int,
+        params=[
+            utils.to_checksum_address(address),
+            identifier,
+        ],
+    )
 
 
 @payload
-def receipt(txhash) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        txhash,
-    ], lambda _: _, 'eth_getTransactionReceipt'
+def receipt(txhash) -> _types.CallData:
+    return _types.CallData(
+        method='eth_getTransactionReceipt',
+        decoder=lambda _: _,
+        params=[
+            txhash
+        ],
+    )
 
 
 @payload
-def block(hash: str, details: bool = False) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
+def block(hash: str, details: bool = False) -> _types.CallData:
     """
     if isinstance(identifier, int) or identifier.lower() in {'latest', 'pending', 'earliest', 'safe', 'finalized'}:
         'eth_getBlockByNumber'
@@ -141,10 +184,14 @@ def block(hash: str, details: bool = False) -> tuple[types.CallParams, types.Dec
     :param details:
     :return:
     """
-    return [
-        hash,
-        details,
-    ], lambda _: _, 'eth_getBlockByHash'
+    return _types.CallData(
+        method='eth_getBlockByHash',
+        decoder=lambda _: _,
+        params=[
+            hash,
+            details,
+        ],
+    )
 
 
 @payload
@@ -157,21 +204,33 @@ def filter(**params: TypedDict(
         'topics': list[str],
     },
     total=False
-)) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        params,
-    ], lambda _: _, 'eth_newFilter'
+)) -> _types.CallData:
+    return _types.CallData(
+        method='eth_newFilter',
+        decoder=lambda _: _,
+        params=[
+            params,
+        ],
+    )
 
 
 @payload
-def entries(filter_id) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        filter_id,
-    ], lambda _: _, 'eth_getFilterLogs'
+def entries(filter_id) -> _types.CallData:
+    return _types.CallData(
+        method='eth_getFilterLogs',
+        decoder=lambda _: _,
+        params=[
+            filter_id,
+        ],
+    )
 
 
 @payload
-def changes(filter_id) -> tuple[types.CallParams, types.Decoder, types.CallMethod]:
-    return [
-        filter_id,
-    ], lambda _: _, 'eth_getFilterChanges'
+def changes(filter_id) -> _types.CallData:
+    return _types.CallData(
+        method='eth_getFilterChanges',
+        decoder=lambda _: _,
+        params=[
+            filter_id,
+        ],
+    )

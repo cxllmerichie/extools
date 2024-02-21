@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Type, Union, Iterable, Any, NewType
+from typing import Type, Union, Any, NewType
 from pydantic import GetCoreSchemaHandler
-from web3 import Web3, types as w3types
 from pydantic_core import core_schema
+from web3 import types as w3types
 
 from web3.types import (
     BlockNumber,
@@ -13,6 +13,8 @@ from pydantic import (  # noqa
     HttpUrl as URL  # noqa
 )
 
+from . import utils
+
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -20,9 +22,6 @@ class AttrDict(dict):
         for k, v in self.items():
             if isinstance(v, dict):
                 self[k] = AttrDict(v)
-
-    def __dir__(self) -> Iterable[str]:
-        return list(super().__dir__()) + [str(k) for k in self.keys()]
 
     def __getattr__(self, item: str) -> Any:
         if item in self:
@@ -35,16 +34,14 @@ class AttrDict(dict):
         except AttributeError:
             return self.__getattr__(item)
 
-    def __setattr__(self, key: str, value: Any):
+    def __setattr__(self, key: str, value: Any) -> None:
         self[key] = value
 
 
 class HexStr(str):
     @classmethod
     def process(cls, address: Union[str, w3types.HexBytes]) -> str:
-        if isinstance(address, w3types.HexBytes):
-            address = address.hex()
-        return address
+        return address.hex() if isinstance(address, w3types.HexBytes) else address
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -64,7 +61,7 @@ class Address(HexStr):
             address = address[:2] + address[26:]
         if len(address) != 42:
             raise ValueError('Any `Address` length must be 42')
-        return str(Web3.to_checksum_address(address))
+        return str(utils.to_checksum_address(address))
 
     def __new__(cls, *args, **kwargs):
         return cls.process(args[0])
