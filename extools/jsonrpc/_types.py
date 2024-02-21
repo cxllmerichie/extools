@@ -11,7 +11,7 @@ CallParams = list[Any]
 Payload = dict[str, Any]
 
 CallData = TypedDict('CallData', {
-    'decoder': _types.Decoder,
-    'params': _types.CallParams,
-    'method': _types.CallMethod,
+    'decoder': Decoder,
+    'params': CallParams,
+    'method': CallMethod,
 })

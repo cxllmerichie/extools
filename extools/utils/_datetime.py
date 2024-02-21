@@ -1,9 +1,7 @@
 from datetime import datetime, timezone
 
-from ..types import PreciseUnixUtc
 
-
-def unixnow() -> PreciseUnixUtc:
+def unixnow() -> float:
     return datetime.timestamp(datetime.now())
 
 

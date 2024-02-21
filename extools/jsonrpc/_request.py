@@ -7,7 +7,7 @@ from .. import json
 
 async def request(
         url: str,
-        payload: dict[str: dict[str, Any]],
+        payload: dict[str, dict[str, Any]],
 ) -> tuple[_types.DecodedResponse, ...]:
     async with aiohttp.ClientSession(
             json_serialize=json.dumps,

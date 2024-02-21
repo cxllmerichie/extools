@@ -91,7 +91,7 @@ class Hash(HexStr):
         return cls.process(args[0])
 
 
-class TxHash(Hash):
+class TxnHash(Hash):
     ...
 
 
