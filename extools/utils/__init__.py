@@ -7,5 +7,6 @@ from ._asyncio import (
     aenumerate,
 )
 from ._web3 import (
-    to_checksum_address
+    keccak256,
+    to_checksum_address,
 )
