@@ -14,7 +14,10 @@ async def request(
     ) as s:
         async with s.post(
                 url=url,
-                headers={'Content-Type': 'application/json'},
+                headers={
+                    'accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
                 data=json.dumps([value['payload'] for value in payload.values()]),
         ) as r:
             return tuple(

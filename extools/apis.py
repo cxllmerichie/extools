@@ -23,17 +23,18 @@ class _API(_abc.ABC):
     async def request(
             self,
             url: types.URL,
-            endpoint: str,
             **kwargs,
     ) -> Optional[types.JSONResponse]:
-        kwargs['headers'] = kwargs.get('headers', dict()) | {'accept': 'application/json'}
+        kwargs['headers'] = kwargs.get('headers', dict()) | {
+            'accept': 'application/json',
+            'content-type': 'application/json',
+        }
         try:
             async with _aiohttp.ClientSession(
-                    base_url=url,
                     json_serialize=json.dumps,
             ) as session:
                 async with session.get(
-                        url=endpoint,
+                        url=url,
                         **kwargs,
                 ) as r:
                     return await r.json()
@@ -53,33 +54,15 @@ class _RateLimitedAPI(_API, _abc.ABC):
         :return:
         """
 
-    # async def __aenter__(self):
-    #     passed_sec = _utils.unixnow() - self.__class__._fetched_at
-    #     delay_sec = 60 / self.rate
-    #
-    #     if passed_sec < delay_sec:
-    #         await _asyncio.sleep(delay_sec - passed_sec)
-    #     self.__class__._fetched_at = _utils.unixnow()
-    #
-    #     return self
+    async def __aenter__(self):
+        passed_sec = _utils.unixnow() - self.__class__._fetched_at
+        delay_sec = 60 / self.rate
 
+        if passed_sec < delay_sec:
+            await _asyncio.sleep(delay_sec - passed_sec)
+        self.__class__._fetched_at = _utils.unixnow()
 
-class DexTools(_RateLimitedAPI):
-    @property
-    def rate(self):
-        return 120
-
-    def __init__(self, key: str, logger: Optional[logman.Logger] = None):
-        self.key: str = key
-        super().__init__(logger=logger)
-
-    async def __call__(self, endpoint: str, **kwargs) -> Optional[types.JSONResponse]:
-        return await super().request(  # no `json.dumps(params)`
-            url='https://public-api.dextools.io',
-            endpoint=f'/standard/v2{endpoint}',
-            headers={'X-API-Key': self.key},
-            **kwargs,
-        )
+        return self
 
 
 class DexScreener(_RateLimitedAPI):
@@ -89,8 +72,7 @@ class DexScreener(_RateLimitedAPI):
 
     async def __call__(self, endpoint: str, **kwargs) -> Optional[types.JSONResponse]:
         return await super().request(
-            url='https://api.dexscreener.com',
-            endpoint=f'/latest/dex{endpoint}',
+            url=f'https://api.dexscreener.com/latest/dex{endpoint}',
             **kwargs,
         )
 
@@ -102,8 +84,7 @@ class GeckoTerminal(_RateLimitedAPI):
 
     async def __call__(self, endpoint: str, **kwargs) -> Optional[types.JSONResponse]:
         return await super().request(
-            url='https://api.geckoterminal.com',
-            endpoint=f'/api/v2{endpoint}',
+            url=f'https://api.geckoterminal.com/api/v2{endpoint}',
             **kwargs,
         )
 
@@ -115,16 +96,36 @@ class CoinGecko(_RateLimitedAPI):
 
     async def __call__(self, endpoint: str, **kwargs) -> Optional[types.JSONResponse]:
         return await super().request(
-            url='https://api.coingecko.com',
-            endpoint=f'/api/v3{endpoint}',
+            url=f'https://api.coingecko.com/api/v3{endpoint}',
+            **kwargs,
+        )
+
+
+class DexTools(_RateLimitedAPI):
+    KEY: str = ...
+
+    @property
+    def rate(self):
+        return 120
+
+    def __init__(self, logger: Optional[logman.Logger] = None):
+        super().__init__(logger=logger)
+
+    async def __call__(self, endpoint: str, **kwargs) -> Optional[types.JSONResponse]:
+        return await super().request(  # no `json.dumps(params)`
+            url=f'https://public-api.dextools.io/standard/v2{endpoint}',
+            headers={'X-API-Key': DexTools.KEY},
             **kwargs,
         )
 
 
 class CryptoAPI(_API):
+    URL: str = ...
+    KEY: str = ...
+
     async def __call__(self, endpoint: str, **kwargs) -> Optional[types.JSONResponse]:
         return await super().request(
-            url='http://127.0.0.1:9876',
-            endpoint=endpoint,
+            url=f'{CryptoAPI.URL}/{endpoint}',
+            headers={'API-Key': CryptoAPI.KEY},
             **kwargs,
         )
